@@ -1,6 +1,6 @@
-# Volterra Onboarding
+# Volterra Management
 
-This project contains scripts to help onboard user(s) to a Volterra Tenant Console
+This project contains scripts and Azure functions to help onboard user(s) to a Volterra Tenant Console and manage Volterra Quotas
 
 # Requirements
 
@@ -29,74 +29,6 @@ pip3 install -r requirements.txt
 ./cli.py config volterra
 ```
 
-For more information about each action use the built-in help:
-
-```bash
-./cli.py config azure --help
-./cli.py config volterra --help
-```
-
-# Usage
-
-The script can add an individual user or all users in an AD group to the Volterra console.
-
-## Add User
-
-The example below adds the yourusername@example.com user to the Volterra console.
-
-```bash
-./cli.py add yourusername@example.com --tenant mytenant
-```
-
-## Add Group
-
-The example below adds all users of the SRE group to the Volterra console.
-
-```bash
-./cli.py add SRE --tenant mytenant
-```
-
-## Remove User
-
-The example below removes the yourusername@example.com user to the Volterra console.
-
-```bash
-./cli.py remove yourusername@example.com --tenant mytenant
-```
-
-## Remove Group
-
-The example below adds all users of the SRE group to the Volterra console.
-
-```bash
-./cli.py remove SRE --tenant mytenant
-```
-
-For more information about each action use the built-in help:
-
-```bash
-./cli.py --help
-./cli.py add --help
-./cli.py remove --help
-./cli.py config --help
-```
-
-# Troubleshoot
-
-You can increase the logging level by running the following config command:
-
-```bash
-./cli.py config loglevel
-```
-
-Supported log levels are:
-
-- CRITICAL
-- ERROR
-- WARNING
-- INFO
-- DEBUG
-
 # Additional Scripts
 
 ### AD Group Compare
@@ -106,32 +38,6 @@ This script will compare the users in the Voltera Tenant Console versus an Activ
 ```bash
 ./ad_group_compare.py --help
 ./ad_group_compare.py --name SRE --tenant mytenant
-```
-
-# Running as a Kubernetes Job
-
-### Create Secrets
-
-The CLI needs the following secrets for the docker container to run correctly:
-
-- Azure AD Application Client ID
-- Azure AD Application Secret
-- Azure AD Tenant ID
-- Volterra VoltConsole Access Token
-
-Run the following commands to create these secrets:
-
-```bash
-export KUBECONFIG=<your k8s config file>
-export CLIENT_ID=<your azure ad app client id>
-export CLIENT_SECRET=<your azure ad app secret>
-export TENANT_ID=<your azure ad tenant id>
-export VOLT_TOKEN=<your voltconsole access token>
-kubectl create secret generic volterra-sso \
-    --from-literal=aad-client-id=$CLIENT_ID \
-    --from-literal=aad-client-secret=$CLIENT_SECRET \
-    --from-literal=aad-tenant=$TENANT_ID \
-    --from-literal=volt-token=$VOLT_TOKEN
 ```
 
 ## Support
