@@ -134,3 +134,4 @@ docker_secret.yaml
 onboard_secrets.yaml
 
 .python_packages
+local.settings.json
