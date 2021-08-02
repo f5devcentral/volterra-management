@@ -83,6 +83,7 @@ def cleanUserRoles(s):
     ]
     cleanUsers = next(
         (user for user in s['cache']['users'] if user['namespace_roles'] == def_roles), None)
+    logging.info(cleanUsers)
     if cleanUsers:
         for user in cleanUsers:
             delUser(user['email'], s)

@@ -29,4 +29,4 @@ def main(mytimer: func.TimerRequest) -> None:
         required_vars['VoltTenantApiToken'], required_vars['VoltTenantName'])
 
     cleanUserRoles(s)
-    logging.debug(s['lastOp'])
+    logging.info(s['lastOp'])
