@@ -133,5 +133,9 @@ token_cache.json
 docker_secret.yaml
 onboard_secrets.yaml
 
-.python_packages
+# Azure Functions artifacts
+bin
+obj
+appsettings.json
 local.settings.json
+.python_packages
