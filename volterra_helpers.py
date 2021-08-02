@@ -259,37 +259,3 @@ def cliRemove(s, email):
         if s['lastOp']['status'] != 'success':
             return {'status': 'failure', 'reason': 'User deletion failed', 'log': s['lastOp']}
     return {'status': 'success'}
-
-
-def isWingmanReady(count=0):
-    try:
-        r = requests.get("http://localhost:8070/status")
-        if r.status_code == 200 and r.text == "READY":
-            logging.debug("wingman ready")
-            return True
-        else:
-            logging.debug("wingman not ready")
-            if count == 3:
-                return False
-            else:
-                time.sleep(10)
-                return isWingmanReady(count+1)
-    except requests.ConnectionError:
-        time.sleep(10)
-        return isWingmanReady(count+1)
-
-
-def getWingmanSecret(blindfoldText):
-    payload = {
-        "type": "blindfold",
-        "location": f"string:///{blindfoldText}"
-    }
-
-    logging.debug(payload)
-
-    r = requests.post("http://localhost:8070/secret/unseal", data=payload)
-
-    if r.status_code == 200:
-        return r.text
-    else:
-        return None
