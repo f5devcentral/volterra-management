@@ -81,10 +81,8 @@ def cleanUserRoles(s):
         {'namespace': 'shared', 'role': 'ves-io-default-role'},
         {'namespace': 'system', 'role': 'ves-io-default-role'}
     ]
-    cleanUsers = next(
-        (user for user in s['cache']['users'] if user['namespace_roles'] == def_roles), None)
-    logging.info(cleanUsers)
-    if cleanUsers:
+    cleanUsers = [user for user in s['cache']['users'] if ((user['namespace_roles'] == def_roles) and (user['domain_owner'] == False))]
+    if len(cleanUsers) > 0:
         for user in cleanUsers:
             delUser(user['email'], s)
     updateSO(s, 'cleanUserRoles', 'success', '{0} Users removed'.format(len(cleanUsers)))
