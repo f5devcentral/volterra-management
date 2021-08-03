@@ -7,14 +7,14 @@ from volterra_helpers import createVoltSession, cleanUserRoles
 import azure.functions as func
 
 
-def main(mytimer: func.TimerRequest) -> None:
+def main(cleanTimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
 
-    if mytimer.past_due:
-        logging.info('The timer is past due!')
+    if cleanTimer.past_due:
+        logging.info('Tenant User Clean is due to run.')
 
-    logging.info('Python timer trigger function ran at %s', utc_timestamp)
+    logging.info('Tenant User Clean ran at %s', utc_timestamp)
 
     required_vars = {'VoltTenantName': False,
                     'VoltTenantApiToken': False}
@@ -27,6 +27,7 @@ def main(mytimer: func.TimerRequest) -> None:
 
     s = createVoltSession(
         required_vars['VoltTenantApiToken'], required_vars['VoltTenantName'])
+    logging.info(s['lastOp'])
 
     cleanUserRoles(s)
     logging.info(s['lastOp'])

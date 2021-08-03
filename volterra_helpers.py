@@ -34,6 +34,18 @@ def updateSO(s, op, status, message):
     s['lastOp'] = action
     return s
 
+def updateToken(s, tokenName, expiryDays=7):
+    url = s['urlBase'] + "/api/web/namespaces/system/renew/api_credentials"
+    tokenPayload = {
+        "name": tokenName,
+        "expiration_days": expiryDays,
+    }
+    try:
+        resp = s['session'].post(url, json=tokenPayload)
+        resp.raise_for_status()
+        return updateSO(s, 'updateToken', 'success', 'token updated')
+    except requests.exceptions.RequestException as e:
+        return updateSO(s, 'updateToken', 'error', e)
 
 def createCache(s, cacheTO=60):
     urlUsers = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
