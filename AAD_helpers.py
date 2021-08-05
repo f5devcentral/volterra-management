@@ -2,7 +2,6 @@ from ms_graph import getGroupId, getGroupMembers
 import logging
 import msal
 
-
 def retrieveAccessToken(client_id, tenant_id, secret):
     authority = f'https://login.microsoftonline.com/{tenant_id}'
     app = None

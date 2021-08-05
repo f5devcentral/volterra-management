@@ -46,7 +46,7 @@ def main(addTimer: func.TimerRequest) -> None:
     for user in addUsers:
         email = user['userPrincipalName']
         thisUser = getUser(AADtoken, email)
-        addUser(s, email, thisUser['giveName'], thisUser['surname'])
+        addUser(s, email, thisUser['givenName'], thisUser['surname'])
         logging.info(s['lastOp'])
     
 

@@ -199,7 +199,6 @@ def createUserRoles(email, first_name, last_name, s, createdNS=None, exists=Fals
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'createUserRoles', 'error', e)
 
-
 def delUser(email, s):
     url = s['urlBase'] + "/api/web/custom/namespaces/system/users/cascade_delete"
     userPayload = {
@@ -227,60 +226,3 @@ def addUser(s, email, first_name, last_name):
         return updateSO(s, 'addUser', 'success', 'User {0} created.'.format(email))
     else:
         return updateSO(s, 'addUser', 'error', 'Failed to create user {0}: {1} '.format(email, s['lastOp']['message']))
-
-def cliAdd(s, email, first_name, last_name, createNS, overwrite, admin):
-    createdNS = None
-    userExist = False
-    nsExist = False
-    checkUser(email, s)
-    if s['lastOp']['status'] == 'present':
-        userExist = True
-    checkUserNS(email, s)
-    if s['lastOp']['status'] == 'present':
-        nsExist = True
-    if overwrite:
-        if createNS:
-            if nsExist:
-                delUserNS(email, s)
-            createUserNS(email, s)
-            createdNS = findUserNS(email)
-        createUserRoles(email, first_name, last_name,
-                        s, createdNS, userExist, admin)
-        if s['lastOp']['status'] == 'success':
-            return {'status': 'success'}
-        else:
-            return {'status': 'failure', 'reason': 'User creation failed', 'log': s['lastOp']}
-    else:
-        if nsExist or userExist:
-            return {'status': 'failure', 'reason': 'NS or User already exists', 'log': s['lastOp']}
-        if createNS:
-            createUserNS(email, s)
-            createdNS = findUserNS(email)
-        createUserRoles(email, first_name, last_name,
-                        s, createdNS, False, admin)
-        if s['lastOp']['status'] == 'success':
-            return {'status': 'success'}
-        else:
-            return {'status': 'failure', 'reason': 'User creation failed', 'log': s['lastOp']}
-
-
-def cliRemove(s, email):
-    userExist = False
-    nsExist = False
-    checkUser(email, s)
-    if s['lastOp']['status'] == 'present':
-        userExist = True
-    checkUserNS(email, s)
-    if s['lastOp']['status'] == 'present':
-        nsExist = True
-    if not nsExist and not userExist:
-        return {'status': 'failure', 'reason': 'Neither NS nor User exist', 'log': s['lastOp']}
-    if nsExist:
-        delUserNS(email, s)
-        if s['lastOp']['status'] != 'success':
-            return {'status': 'failure', 'reason': 'NS deletion failed', 'log': s['lastOp']}
-    if userExist:
-        delUser(email, s)
-        if s['lastOp']['status'] != 'success':
-            return {'status': 'failure', 'reason': 'User deletion failed', 'log': s['lastOp']}
-    return {'status': 'success'}
