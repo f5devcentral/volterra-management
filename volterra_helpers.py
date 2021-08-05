@@ -213,6 +213,20 @@ def delUser(email, s):
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'delUser', 'error', e)
 
+def addUser(s, email, first_name, last_name):
+    checkUser(email, s)
+    if s['lastOp']['status'] == 'present':
+        return updateSO(s, 'addUser', 'error', 'User {0} already exists.'.format(email))
+    checkUserNS(email, s)
+    if s['lastOp']['status'] == 'present':
+        return updateSO(s, 'addUser', 'error', 'NS {0} already exists.'.format(findUserNS(email)))
+    createUserNS(email, s)
+    createdNS = findUserNS(email)
+    createUserRoles(email, first_name, last_name, s, createdNS, False, False)
+    if s['lastOp']['status'] == 'success':
+        return updateSO(s, 'addUser', 'success', 'User {0} created.'.format(email))
+    else:
+        return updateSO(s, 'addUser', 'error', 'Failed to create user {0}: {1} '.format(email, s['lastOp']['message']))
 
 def cliAdd(s, email, first_name, last_name, createNS, overwrite, admin):
     createdNS = None
