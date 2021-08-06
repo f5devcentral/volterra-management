@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 
-from AAD_helpers import retrieveAccessToken, voltUsers2Add
+from AAD_helpers import retrieveAccessToken, voltUsers2Add, voltUsers2Remove
 from ms_graph import getUser
 from volterra_helpers import createVoltSession, addUser, cleanUserRoles
 
@@ -42,12 +42,19 @@ def main(addTimer: func.TimerRequest) -> None:
 
     # Add Users from AAD
     AADtoken = retrieveAccessToken(required_vars['AADclientID'], required_vars['AADtenantID'], required_vars['AADsecret'])
-    addUsers = voltUsers2Add(s, AADtoken, required_vars['AADGroupName'])
+    addUsers: list[type[dict]] = voltUsers2Add(s, AADtoken, required_vars['AADGroupName'])
     for user in addUsers:
         email = user['userPrincipalName']
         thisUser = getUser(AADtoken, email)
         addUser(s, email, thisUser['givenName'], thisUser['surname'])
         logging.info(s['lastOp'])
+
+    # Log Users to Remove (Information only)
+    removeUsers: list[type[dict]] = voltUsers2Remove(s, AADtoken, required_vars['AADGroupName'])
+    remUsers = []
+    for user in removeUsers:
+        remUsers.append(user['userPrincipalName'])
+    logging.info("Users to be Removed: {0}".format(remUsers))
     
 
 

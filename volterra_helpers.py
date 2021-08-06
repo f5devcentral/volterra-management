@@ -6,7 +6,7 @@ import time
 from urllib3.util.retry import Retry
 
 
-def createVoltSession(token, tenantName):
+def createVoltSession(token: str, tenantName: str) -> dict:
     now = datetime.datetime.now()
     apiToken = "APIToken {0}".format(token)
     s = requests.Session()
@@ -23,7 +23,7 @@ def createVoltSession(token, tenantName):
     return session
 
 
-def updateSO(s, op, status, message):
+def updateSO(s: dict, op: str, status: str, message: str) -> dict:
     now = datetime.datetime.now()
     action = {
         'operation': op,
@@ -34,7 +34,7 @@ def updateSO(s, op, status, message):
     s['lastOp'] = action
     return s
 
-def updateToken(s, tokenName, expiryDays=7):
+def updateToken(s: dict, tokenName: str, expiryDays: int=7) -> dict:
     url = s['urlBase'] + "/api/web/namespaces/system/renew/api_credentials"
     tokenPayload = {
         "name": tokenName,
@@ -47,7 +47,7 @@ def updateToken(s, tokenName, expiryDays=7):
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'updateToken', 'error', e)
 
-def createCache(s, cacheTO=60):
+def createCache(s: dict, cacheTO: int=60) -> dict:
     urlUsers = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     try:
         resp = s['session'].get(urlUsers)
@@ -76,7 +76,7 @@ def createCache(s, cacheTO=60):
     updateSO(s, 'createCache', 'success', "Cache populated")
 
 
-def findUserNS(email):
+def findUserNS(email: str) -> str:
     userNS = ""
     if "#EXT#@" in email:
         userNS = email.split(
@@ -85,7 +85,7 @@ def findUserNS(email):
         userNS = email.split('@')[0].replace('.', '-').lower()
     return userNS
 
-def cleanUserRoles(s):
+def cleanUserRoles(s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     def_roles = [
@@ -100,7 +100,7 @@ def cleanUserRoles(s):
     updateSO(s, 'cleanUserRoles', 'success', '{0} Users removed'.format(len(cleanUsers)))
 
 
-def checkUserNS(email, s):
+def checkUserNS(email: str, s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     userNS = findUserNS(email)
@@ -111,7 +111,7 @@ def checkUserNS(email, s):
     return updateSO(s, 'checkUserNS', 'absent', 'UserNS {0} is absent'.format(userNS))
 
 
-def checkUser(email, s):
+def checkUser(email: str, s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     thisUser = next(
@@ -121,7 +121,7 @@ def checkUser(email, s):
     return updateSO(s, 'checkUser', 'absent', 'User {0} is absent'.format(email))
 
 
-def createUserNS(email, s):
+def createUserNS(email: str, s: dict) -> dict:
     userNS = findUserNS(email)
     url = s['urlBase'] + "/api/web/namespaces"
     nsPayload = {
@@ -144,7 +144,7 @@ def createUserNS(email, s):
         return updateSO(s, 'createUserNS', 'error', e)
 
 
-def delUserNS(email, s):
+def delUserNS(email: str, s: dict) -> dict:
     userNS = findUserNS(email)
     url = s['urlBase'] + \
         "/api/web/namespaces/{0}/cascade_delete".format(userNS)
@@ -159,7 +159,7 @@ def delUserNS(email, s):
         return updateSO(s, 'delUserNS', 'error', e)
 
 
-def createUserRoles(email, first_name, last_name, s, createdNS=None, exists=False, admin=False):
+def createUserRoles(email: str, first_name: str, last_name: str, s: dict, createdNS: str=None, exists: bool=False, admin: bool=False) -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     if admin:
         namespace_roles = [
@@ -199,7 +199,7 @@ def createUserRoles(email, first_name, last_name, s, createdNS=None, exists=Fals
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'createUserRoles', 'error', e)
 
-def delUser(email, s):
+def delUser(email: str, s: dict) -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/users/cascade_delete"
     userPayload = {
         "email": email.lower(),
@@ -212,7 +212,7 @@ def delUser(email, s):
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'delUser', 'error', e)
 
-def addUser(s, email, first_name, last_name):
+def addUser(s: dict, email: str, first_name: str, last_name: str) -> dict:
     checkUser(email, s)
     if s['lastOp']['status'] == 'present':
         return updateSO(s, 'addUser', 'error', 'User {0} already exists.'.format(email))

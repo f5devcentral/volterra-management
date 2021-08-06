@@ -2,7 +2,7 @@ from ms_graph import getGroupId, getGroupMembers
 import logging
 import msal
 
-def retrieveAccessToken(client_id, tenant_id, secret):
+def retrieveAccessToken(client_id: str, tenant_id: str, secret: str) -> str:
     authority = f'https://login.microsoftonline.com/{tenant_id}'
     app = None
     result = None
@@ -25,13 +25,13 @@ def retrieveAccessToken(client_id, tenant_id, secret):
         logging.info(result.get("correlation_id"))
         return None
 
-def getAADGroupMembers(token, AADGroupName):
+def getAADGroupMembers(token: str, AADGroupName: str) -> list:
     id = getGroupId(token, AADGroupName)
     res = getGroupMembers(token, id)
     return res
 
-def voltUsers2Add(session, token, AADGroupName):
-    AADGroupMembers = getAADGroupMembers(token, AADGroupName)
+def voltUsers2Add(session: dict, token: str, AADGroupName: str) -> list:
+    AADGroupMembers: list[type[dict]] = getAADGroupMembers(token, AADGroupName)
     # Build comparable VoltConsole user list
     voltUserList = []
     for user in session['cache']['users']:
@@ -50,7 +50,7 @@ def voltUsers2Add(session, token, AADGroupName):
     res = [x for x in AADGroupMembers if x not in voltUserList]
     return res
 
-def voltUsers2Remove(session, token, AADGroupName):
+def voltUsers2Remove(session: dict, token: str, AADGroupName: str) -> list:
     AADGroupMembers = getAADGroupMembers(token, AADGroupName)
     # Build comparable VoltConsole user list
     voltUserList = []
