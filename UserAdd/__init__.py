@@ -4,7 +4,7 @@ import os
 
 from AAD_helpers import retrieveAccessToken, voltUsers2Add, voltUsers2Remove
 from ms_graph import getUser
-from volterra_helpers import createVoltSession, addUser, cleanUserRoles
+from volterra_helpers import createVoltSession, updateSO, addUser, removeUserRoles
 
 import azure.functions as func
 
@@ -37,7 +37,7 @@ def main(addTimer: func.TimerRequest) -> None:
     logging.info(s['lastOp'])
 
     # Clean VoltConsole Users
-    cleanUserRoles(s)
+    removeUserRoles(s)
     logging.info(s['lastOp'])
 
     # Add Users from AAD
@@ -50,11 +50,16 @@ def main(addTimer: func.TimerRequest) -> None:
         logging.info(s['lastOp'])
 
     # Log Users to Remove (Information only)
-    removeUsers: list[type[dict]] = voltUsers2Remove(s, AADtoken, required_vars['AADGroupName'])
-    remUsers = []
-    for user in removeUsers:
-        remUsers.append(user['userPrincipalName'])
-    logging.info("Users to be Removed: {0}".format(remUsers))
+    cleanUsers: list[type[dict]] = voltUsers2Remove(s, AADtoken, required_vars['AADGroupName'])
+    if len(cleanUsers) > 0:
+        remUsers = []
+        for user in cleanUsers:
+            remUsers.append(user['userPrincipalName'])
+        updateSO(s, 'cleanUsers', 'success', "Users to be cleaned: {0}".format(remUsers))
+    else:
+        updateSO(s, 'cleanUsers', 'success', "No Users to be cleaned.")
+    logging.info(s['lastOp'])
+
     
 
 

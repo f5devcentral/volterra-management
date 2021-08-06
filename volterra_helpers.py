@@ -85,7 +85,7 @@ def findUserNS(email: str) -> str:
         userNS = email.split('@')[0].replace('.', '-').lower()
     return userNS
 
-def cleanUserRoles(s: dict) -> dict:
+def removeUserRoles(s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     def_roles = [
@@ -93,11 +93,11 @@ def cleanUserRoles(s: dict) -> dict:
         {'namespace': 'shared', 'role': 'ves-io-default-role'},
         {'namespace': 'system', 'role': 'ves-io-default-role'}
     ]
-    cleanUsers = [user for user in s['cache']['users'] if ((user['namespace_roles'] == def_roles) and (user['domain_owner'] == False))]
-    if len(cleanUsers) > 0:
-        for user in cleanUsers:
+    removeUsers = [user for user in s['cache']['users'] if ((user['namespace_roles'] == def_roles) and (user['domain_owner'] == False))]
+    if len(removeUsers) > 0:
+        for user in removeUsers:
             delUser(user['email'], s)
-    updateSO(s, 'cleanUserRoles', 'success', '{0} Users removed'.format(len(cleanUsers)))
+    updateSO(s, 'removeUserRoles', 'success', '{0} Users removed'.format(len(removeUsers)))
 
 
 def checkUserNS(email: str, s: dict) -> dict:
