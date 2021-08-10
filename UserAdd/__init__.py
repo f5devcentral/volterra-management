@@ -51,10 +51,12 @@ def main(addTimer: func.TimerRequest) -> None:
 
     # Log Users to Remove (Information only)
     cleanUsers: list[type[dict]] = voltUsers2Remove(s, AADtoken, required_vars['AADGroupName'])
-    if len(cleanUsers) > 0:
+    ## This is not necessary once the 'testuser' without an email is removed
+    if len(cleanUsers[0]['userPrincipalName']) > 0:
         remUsers = []
         for user in cleanUsers:
-            remUsers.append(user['userPrincipalName'])
+            if len(user['userPrincipalName']) > 0:
+                remUsers.append(user['userPrincipalName'])
         updateSO(s, 'cleanUsers', 'success', "Users to be cleaned: {0}".format(remUsers))
     else:
         updateSO(s, 'cleanUsers', 'success', "No Users to be cleaned.")
