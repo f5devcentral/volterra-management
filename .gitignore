@@ -142,3 +142,4 @@ local.settings.json
 deploy.sh
 remove.sh
 .vscode/launch.json
+funcConfig.ini
