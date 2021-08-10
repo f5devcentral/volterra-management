@@ -20,7 +20,7 @@ def getGroupId(authorization_token: str, name: str) -> str:
         raise ValueError(f'Azure Group {name} not found')
 
 
-def getGroupMembers(authorization_token: str, group_id: str) -> [dict]:
+def getGroupMembers(authorization_token: str, group_id: str) -> list:
     """Get list of Users belonging to the Azure AD group ID"""
     # TODO: handle result pagination
 

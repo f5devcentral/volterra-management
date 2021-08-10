@@ -6,7 +6,7 @@ import time
 from urllib3.util.retry import Retry
 
 
-def createVoltSession(token, tenantName):
+def createVoltSession(token: str, tenantName: str) -> dict:
     now = datetime.datetime.now()
     apiToken = "APIToken {0}".format(token)
     s = requests.Session()
@@ -23,7 +23,7 @@ def createVoltSession(token, tenantName):
     return session
 
 
-def updateSO(s, op, status, message):
+def updateSO(s: dict, op: str, status: str, message: str) -> dict:
     now = datetime.datetime.now()
     action = {
         'operation': op,
@@ -34,8 +34,20 @@ def updateSO(s, op, status, message):
     s['lastOp'] = action
     return s
 
+def updateToken(s: dict, tokenName: str, expiryDays: int=7) -> dict:
+    url = s['urlBase'] + "/api/web/namespaces/system/renew/api_credentials"
+    tokenPayload = {
+        "name": tokenName,
+        "expiration_days": expiryDays,
+    }
+    try:
+        resp = s['session'].post(url, json=tokenPayload)
+        resp.raise_for_status()
+        return updateSO(s, 'updateToken', 'success', 'token updated')
+    except requests.exceptions.RequestException as e:
+        return updateSO(s, 'updateToken', 'error', e)
 
-def createCache(s, cacheTO=60):
+def createCache(s: dict, cacheTO: int=60) -> dict:
     urlUsers = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     try:
         resp = s['session'].get(urlUsers)
@@ -64,7 +76,7 @@ def createCache(s, cacheTO=60):
     updateSO(s, 'createCache', 'success', "Cache populated")
 
 
-def findUserNS(email):
+def findUserNS(email: str) -> str:
     userNS = ""
     if "#EXT#@" in email:
         userNS = email.split(
@@ -73,8 +85,22 @@ def findUserNS(email):
         userNS = email.split('@')[0].replace('.', '-').lower()
     return userNS
 
+def removeUserRoles(s: dict) -> dict:
+    if s['cache']['expiry'] < datetime.datetime.now().timestamp():
+        createCache(s)
+    def_roles = [
+        {'namespace': 'default', 'role': 'ves-io-default-role'},
+        {'namespace': 'shared', 'role': 'ves-io-default-role'},
+        {'namespace': 'system', 'role': 'ves-io-default-role'}
+    ]
+    removeUsers = [user for user in s['cache']['users'] if ((user['namespace_roles'] == def_roles) and (user['domain_owner'] == False))]
+    if len(removeUsers) > 0:
+        for user in removeUsers:
+            delUser(user['email'], s)
+    updateSO(s, 'removeUserRoles', 'success', '{0} Users removed'.format(len(removeUsers)))
 
-def checkUserNS(email, s):
+
+def checkUserNS(email: str, s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     userNS = findUserNS(email)
@@ -85,7 +111,7 @@ def checkUserNS(email, s):
     return updateSO(s, 'checkUserNS', 'absent', 'UserNS {0} is absent'.format(userNS))
 
 
-def checkUser(email, s):
+def checkUser(email: str, s: dict) -> dict:
     if s['cache']['expiry'] < datetime.datetime.now().timestamp():
         createCache(s)
     thisUser = next(
@@ -95,7 +121,7 @@ def checkUser(email, s):
     return updateSO(s, 'checkUser', 'absent', 'User {0} is absent'.format(email))
 
 
-def createUserNS(email, s):
+def createUserNS(email: str, s: dict) -> dict:
     userNS = findUserNS(email)
     url = s['urlBase'] + "/api/web/namespaces"
     nsPayload = {
@@ -118,7 +144,7 @@ def createUserNS(email, s):
         return updateSO(s, 'createUserNS', 'error', e)
 
 
-def delUserNS(email, s):
+def delUserNS(email: str, s: dict) -> dict:
     userNS = findUserNS(email)
     url = s['urlBase'] + \
         "/api/web/namespaces/{0}/cascade_delete".format(userNS)
@@ -133,7 +159,7 @@ def delUserNS(email, s):
         return updateSO(s, 'delUserNS', 'error', e)
 
 
-def createUserRoles(email, first_name, last_name, s, createdNS=None, exists=False, admin=False):
+def createUserRoles(email: str, first_name: str, last_name: str, s: dict, createdNS: str=None, exists: bool=False, admin: bool=False) -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     if admin:
         namespace_roles = [
@@ -173,8 +199,7 @@ def createUserRoles(email, first_name, last_name, s, createdNS=None, exists=Fals
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'createUserRoles', 'error', e)
 
-
-def delUser(email, s):
+def delUser(email: str, s: dict) -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/users/cascade_delete"
     userPayload = {
         "email": email.lower(),
@@ -187,94 +212,17 @@ def delUser(email, s):
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'delUser', 'error', e)
 
-
-def cliAdd(s, email, first_name, last_name, createNS, overwrite, admin):
-    createdNS = None
-    userExist = False
-    nsExist = False
+def addUser(s: dict, email: str, first_name: str, last_name: str) -> dict:
     checkUser(email, s)
     if s['lastOp']['status'] == 'present':
-        userExist = True
+        return updateSO(s, 'addUser', 'error', 'User {0} already exists.'.format(email))
     checkUserNS(email, s)
     if s['lastOp']['status'] == 'present':
-        nsExist = True
-    if overwrite:
-        if createNS:
-            if nsExist:
-                delUserNS(email, s)
-            createUserNS(email, s)
-            createdNS = findUserNS(email)
-        createUserRoles(email, first_name, last_name,
-                        s, createdNS, userExist, admin)
-        if s['lastOp']['status'] == 'success':
-            return {'status': 'success'}
-        else:
-            return {'status': 'failure', 'reason': 'User creation failed', 'log': s['lastOp']}
+        return updateSO(s, 'addUser', 'error', 'NS {0} already exists.'.format(findUserNS(email)))
+    createUserNS(email, s)
+    createdNS = findUserNS(email)
+    createUserRoles(email, first_name, last_name, s, createdNS, False, False)
+    if s['lastOp']['status'] == 'success':
+        return updateSO(s, 'addUser', 'success', 'User {0} created.'.format(email))
     else:
-        if nsExist or userExist:
-            return {'status': 'failure', 'reason': 'NS or User already exists', 'log': s['lastOp']}
-        if createNS:
-            createUserNS(email, s)
-            createdNS = findUserNS(email)
-        createUserRoles(email, first_name, last_name,
-                        s, createdNS, False, admin)
-        if s['lastOp']['status'] == 'success':
-            return {'status': 'success'}
-        else:
-            return {'status': 'failure', 'reason': 'User creation failed', 'log': s['lastOp']}
-
-
-def cliRemove(s, email):
-    userExist = False
-    nsExist = False
-    checkUser(email, s)
-    if s['lastOp']['status'] == 'present':
-        userExist = True
-    checkUserNS(email, s)
-    if s['lastOp']['status'] == 'present':
-        nsExist = True
-    if not nsExist and not userExist:
-        return {'status': 'failure', 'reason': 'Neither NS nor User exist', 'log': s['lastOp']}
-    if nsExist:
-        delUserNS(email, s)
-        if s['lastOp']['status'] != 'success':
-            return {'status': 'failure', 'reason': 'NS deletion failed', 'log': s['lastOp']}
-    if userExist:
-        delUser(email, s)
-        if s['lastOp']['status'] != 'success':
-            return {'status': 'failure', 'reason': 'User deletion failed', 'log': s['lastOp']}
-    return {'status': 'success'}
-
-
-def isWingmanReady(count=0):
-    try:
-        r = requests.get("http://localhost:8070/status")
-        if r.status_code == 200 and r.text == "READY":
-            logging.debug("wingman ready")
-            return True
-        else:
-            logging.debug("wingman not ready")
-            if count == 3:
-                return False
-            else:
-                time.sleep(10)
-                return isWingmanReady(count+1)
-    except requests.ConnectionError:
-        time.sleep(10)
-        return isWingmanReady(count+1)
-
-
-def getWingmanSecret(blindfoldText):
-    payload = {
-        "type": "blindfold",
-        "location": f"string:///{blindfoldText}"
-    }
-
-    logging.debug(payload)
-
-    r = requests.post("http://localhost:8070/secret/unseal", data=payload)
-
-    if r.status_code == 200:
-        return r.text
-    else:
-        return None
+        return updateSO(s, 'addUser', 'error', 'Failed to create user {0}: {1} '.format(email, s['lastOp']['message']))

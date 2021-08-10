@@ -1,4 +1,7 @@
 msal >= 1.8.0
-click >= 7.1.2
-colorama >=0.4.4
-requests >=2.25.1
+azure-functions>=1.7.2
+certifi>=2021.5.30
+charset-normalizer>=2.0.2
+idna>=3.2
+requests>=2.26.0
+urllib3>=1.26.6
