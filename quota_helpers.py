@@ -44,7 +44,7 @@ def postQuotaViolations(url, quotaViolations, tenant):
             "activitySubtitle": "on {0} tenant".format(tenant),
             "activityImage": "https://teamsnodesample.azurewebsites.net/static/img/image9.png",
             "facts": [{
-                "name": "Objects above threshold",
+                "name": "Objects above threshold:",
                 "value": "{0}".format(', '.join(quotaViolations))
             }],
             "markdown": "true"
