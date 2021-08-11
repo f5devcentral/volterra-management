@@ -34,7 +34,7 @@ def main(quotaTimer: func.TimerRequest) -> None:
     logging.info(s['lastOp'])
 
     quotas = getQuota("system", s)
-    logging.info(s,['lastOp'])
+    logging.info(s['lastOp'])
 
     quotaViolations = getQuotaViolations(quotas)
 
