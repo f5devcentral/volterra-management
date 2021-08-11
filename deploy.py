@@ -14,7 +14,8 @@ def checkVars(config):
         'ResourceGroupName': False,
         'StorageName': False,
         'KeyVaultName': False,
-        'FunctionAppName': False
+        'FunctionAppName': False,
+        'TeamsWebhookUrl': False
     }
     for s in config.sections():
         for v in required_vars:
@@ -49,7 +50,8 @@ def deployBase(section):
         "AADclientID" : section['AADclientID'],
         "AADtenantID" : section['AADtenantID'],
         "AADsecret" : section['AADsecret'],
-        "AADGroupName" : section['AADGroupName']
+        "AADGroupName" : section['AADGroupName'],
+        "TeamsWebhookUrl" : section['TeamsWebhookUrl']
     }
 
     createRG = "group create --name {0} --location {1}" \
