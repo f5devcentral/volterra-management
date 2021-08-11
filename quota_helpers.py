@@ -50,11 +50,32 @@ def postQuotaViolations(url, quotaViolations, tenant):
             "markdown": "true"
         }]
     }
-
     logging.debug(payload)
     logging.debug(url)
-
     resp = requests.post(url, json=payload)
-
     logging.debug(resp.status_code)
     logging.debug(resp.text)
+
+def postNewUser(url, newUsers, tenant):
+    payload = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": "New Users Added",
+        "sections": [{
+            "activityTitle": "New User(s) Added",
+            "activitySubtitle": "on {0} tenant".format(tenant),
+            "activityImage": "https://teamsnodesample.azurewebsites.net/static/img/image2.png",
+            "facts": [{
+                "name": "Users Added:",
+                "value": "{0}".format(', '.join(newUsers))
+            }],
+            "markdown": "true"
+        }]
+    }
+    logging.debug(payload)
+    logging.debug(url)
+    resp = requests.post(url, json=payload)
+    logging.debug(resp.status_code)
+    logging.debug(resp.text)
+
