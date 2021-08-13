@@ -5,6 +5,7 @@ import os
 from AAD_helpers import retrieveAccessToken, voltUsers2Add, voltUsers2Remove
 from ms_graph import getUser
 from volterra_helpers import createVoltSession, updateSO, addUser, removeUserRoles
+from quota_helpers import postNewUser
 
 import azure.functions as func
 
@@ -24,7 +25,8 @@ def main(addTimer: func.TimerRequest) -> None:
         'AADsecret': False,
         'AADGroupName': False,
         'VoltTenantApiToken': False,
-        'VoltTenantName': False
+        'VoltTenantName': False,
+        'TeamsWebhookUrl': False
     }
     for v in required_vars:
         required_vars[v] = os.environ.get(v, False)
@@ -43,15 +45,20 @@ def main(addTimer: func.TimerRequest) -> None:
     # Add Users from AAD
     AADtoken = retrieveAccessToken(required_vars['AADclientID'], required_vars['AADtenantID'], required_vars['AADsecret'])
     addUsers: list[type[dict]] = voltUsers2Add(s, AADtoken, required_vars['AADGroupName'])
+    newUsers = []
     for user in addUsers:
         email = user['userPrincipalName']
         thisUser = getUser(AADtoken, email)
         addUser(s, email, thisUser['givenName'], thisUser['surname'])
+        newUsers.append(email)
         logging.info(s['lastOp'])
+
+    # Post New Users in Teams Channel
+    if len(newUsers) > 0:
+        postNewUser(required_vars['TeamsWebhookUrl'], newUsers, required_vars['VoltTenantName'])
 
     # Log Users to Remove (Information only)
     cleanUsers: list[type[dict]] = voltUsers2Remove(s, AADtoken, required_vars['AADGroupName'])
-    ## This is not necessary once the 'testuser' without an email is removed
     if len(cleanUsers) > 0:
         remUsers = []
         for user in cleanUsers:

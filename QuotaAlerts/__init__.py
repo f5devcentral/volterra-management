@@ -44,10 +44,7 @@ def main(quotaTimer: func.TimerRequest) -> None:
         for q in quotaViolations:
             logging.info(q)
         # post to teams channel
-        webhookUrl = os.environ.get('TeamsWebhookUrl', False)
-        if(webhookUrl):
-            postQuotaViolations(webhookUrl, quotaViolations,
-                                required_vars['VoltTenantName'])
+        postQuotaViolations(required_vars['TeamsWebhookUrl'], quotaViolations, required_vars['VoltTenantName'])
 
     else:
         logging.info("No quota issues found")
