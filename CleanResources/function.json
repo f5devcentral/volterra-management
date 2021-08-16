@@ -1,0 +1,12 @@
+{
+    "scriptFile": "__init__.py",
+    "bindings": [
+      {
+        "name": "updateTimer",
+        "type": "cleanTrigger",
+        "direction": "in",
+        "schedule": "0 0 5 * * *"
+      }
+    ]
+  }
+  
