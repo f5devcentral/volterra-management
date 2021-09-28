@@ -33,6 +33,30 @@ def getStaleSites(s: dict, staleDays: int = 30):
         updateSO(s, 'getStaleSites', 'error', e)
         return None
 
+def getStaleSitesv2(s: dict, staleDays: int = 30):
+    url = s['urlBase'] + "/api/config/namespaces/system/sites?report_fields"
+    try:
+        resp = s['session'].get(url)
+        resp.raise_for_status()
+        staleSites = []
+        expiry = findExpiry(staleDays)
+        for item in resp.json()['items']:
+            #Check for FAILED sites last modified before expiry
+            if (item['get_spec']['site_type'] == 'CUSTOMER_EDGE') and \
+                (item['get_spec']['site_state'] == 'FAILED') and \
+                (parse(item['system_metadata']['modification_timestamp']) < expiry):
+                staleSites.append(item['name'])
+            #Check for WAITING_FOR_REGISTRATION created before expiry
+            if (item['get_spec']['site_type'] == 'CUSTOMER_EDGE') and \
+                (item['get_spec']['site_state'] == 'WAITING_FOR_REGISTRATION') and \
+                (parse(item['system_metadata']['creation_timestamp']) < expiry):
+                staleSites.append({ "name": item['name'], "kind": item['owner_view']['kind'] })
+        updateSO(s, 'getStaleSites', 'success', 'fetched stale sites')
+        return staleSites
+    except requests.exceptions.RequestException as e:
+        updateSO(s, 'getStaleSites', 'error', e)
+        return None
+
 def getStaleUserNSs(s: dict, staleDays: int = 30):
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     try:
@@ -48,34 +72,28 @@ def getStaleUserNSs(s: dict, staleDays: int = 30):
         updateSO(s, 'getStaleUserNSs', 'error', e)
         return None
 
-def cleanStaleSites(s: dict, sites: list):
+def decomSites(sites: list, s: dict) -> dict:
+    decommedSites = []
+    errors = []
     for site in sites:
-        url = s['urlBase'] + "/api/web/namespaces/system/renew/api_credentials/{}".format(cluster)
+        url = s['urlBase'] + "/api/register/namespaces/system/site/{0}/state".format(site)
+        sitePayload = {
+            "name": site,
+            "namespace": "system",
+            "state": "DECOMISSIONING"
+        }
         try:
-            r = requests.delete(url)
-            if r.status_code != 200:
-                logging.error("Failed to delete cluster {}".format(cluster))
-        except exceptions.ConnectionError:
-            logging.error("Failed to delete cluster {}".format(cluster)) 
+            resp = s['session'].post(url, json=sitePayload)
+            resp.raise_for_status()
+            decommedSites.append(site)
+        except requests.exceptions.RequestException as e:
+            errors.append(e)
+    if len(errors) > 0:
+        return updateSO(s, 'decomSites', 'error', 'Decommed: {0}\nErrors: {1}'.format(decommedSites, errors))
+    else:
+        return updateSO(s, 'decomSites', 'success', 'Decommed: {0}'.format(decommedSites))
 
-def GetUsers(s: dict):
-    url = s['urlBase'] + "/api/web/namespaces/system/users"
-    return None
-
-def findStaleUsers(staleDays: int = 30, users: list = None):
-    url = "https://volterra-api.herokuapp.com/api/web/namespaces/system/users"
-    try:
-        r = requests.get(url)
-        if r.status_code != 200:
-            logging.error("Failed to get users")
-            return None
-        else:
-            return r.json()
-    except exceptions.ConnectionError:
-        logging.error("Failed to get users")
-        return None
-
-def CleanStaleUsers(s: dict, users: list):
+def CleanStaleUserNSs(s: dict, users: list):
     if len(users) > 0:
         for user in users:
             url = s['urlBase'] + "/api/web/namespaces/system/users/{}".format(user)
