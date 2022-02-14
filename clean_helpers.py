@@ -3,7 +3,7 @@ import logging
 import datetime
 from dateutil.parser import *
 
-from volterra_helpers import updateSO, findUserNS
+from volterra_helpers import updateSO, findUserNS, createUserNS, delUserNS
 
 def findExpiry(staleDays: int):
     expiry = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(days=staleDays)
@@ -57,7 +57,7 @@ def getStaleSitesv2(s: dict, staleDays: int = 30):
         updateSO(s, 'getStaleSites', 'error', e)
         return None
 
-def getStaleUserNSs(s: dict, staleDays: int = 60):
+def getStaleUsers(s: dict, staleDays: int = 60):
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     try:
         resp = s['session'].get(url)
@@ -93,15 +93,23 @@ def decomSites(sites: list, s: dict) -> dict:
     else:
         return updateSO(s, 'decomSites', 'success', 'Decommed: {0}'.format(decommedSites))
 
-def CleanStaleUserNSs(s: dict, users: list):
+def cleanStaleUserNSs(s: dict, users: list):
     if len(users) > 0:
+        cleanedNSs = []
+        noop = []
         for user in users:
-            url = s['urlBase'] + "/api/web/namespaces/system/users/{}".format(user)
+            url = s['urlBase'] + "/api/web/namespaces/{}".format(findUserNS(user))
             try:
-                r = requests.delete(url)
-                if r.status_code != 200:
-                    logging.error("Failed to delete user {}".format(user))
-            except exceptions.ConnectionError:
+                r = s['session'].get(url)
+                if r.status_code == 200:
+                    delUserNS(user, s)
+                    desc = 'cleaned by tenant admin at {0}'.format(datetime.datetime.now().isoformat())
+                    createUserNS(user, s, desc)
+                    cleanedNSs.append(user)
+                else:
+                    noop.append(user)
+            except requests.exceptions.RequestException as e:
                 logging.error("Failed to delete user {}".format(user))
+        return updateSO(s, 'cleanStaleUserNSs', 'success', 'Cleaned NSs: {0}, NoOp users:{1}'.format(cleanedNSs, noop))
     else:
-        return updateSO(s, 'CleanStaleUsers', 'success', 'no stale users')
+        return updateSO(s, 'cleanStaleUserNSs', 'success', 'no stale NSs to clean')

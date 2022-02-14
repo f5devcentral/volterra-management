@@ -3,7 +3,7 @@ import logging
 import os
 
 from volterra_helpers import createVoltSession
-from clean_helpers import getStaleSites, getStaleUserNSs, decomSites
+from clean_helpers import getStaleSites, decomSites, getStaleUsers, cleanStaleUserNSs 
 
 import azure.functions as func
 
@@ -36,8 +36,10 @@ def main(cleanTimer: func.TimerRequest) -> None:
     #decomSites(sites, s)
     #logging.info(s['lastOp'])
 
-    ns = getStaleUserNSs(s, 60)
+    users = getStaleUsers(s, 60)
     logging.info(s['lastOp'])
+    #cleanStaleUserNSs(s, users)
+    #logging.info(s['lastOp'])
 
     #logging.info("DEBUG sites: {}".format(sites))
     #logging.info("DEBUG NSs: {}".format(ns))
