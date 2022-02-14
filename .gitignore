@@ -143,3 +143,5 @@ deploy.sh
 remove.sh
 .vscode/launch.json
 funcConfig.ini
+gsaConfig.ini
+allConfig.ini

@@ -159,23 +159,28 @@ def delUserNS(email: str, s: dict) -> dict:
         return updateSO(s, 'delUserNS', 'error', e)
 
 
-def createUserRoles(email: str, first_name: str, last_name: str, s: dict, createdNS: str=None, exists: bool=False, admin: bool=False) -> dict:
+def createUserRoles(email: str, first_name: str, last_name: str, s: dict, createdNS: str=None, exists: bool=False, role: str="default") -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
-    if admin:
-        namespace_roles = [
+    namespace_map = {
+        'monitor': [
+            {'namespace': 'system', 'role': 'ves-io-monitor-role'},
+            {'namespace': '*', 'role': 'ves-io-monitor-role'},
+            {'namespace': 'shared', 'role': 'ves-io-monitor-role'}
+        ],
+        'admin': [
             {'namespace': 'system', 'role': 'ves-io-admin-role'},
             {'namespace': '*', 'role': 'ves-io-admin-role'},
             {'namespace': 'default', 'role': 'ves-io-admin-role'},
             {'namespace': 'shared', 'role': 'ves-io-admin-role'}
-        ]
-    else:
-        namespace_roles = [
+        ],
+        'default': [
             {'namespace': 'system', 'role': 'ves-io-power-developer-role'},
             {'namespace': 'system', 'role': 'f5-demo-infra-write'},
             {'namespace': '*', 'role': 'ves-io-monitor-role'},
             {'namespace': 'default', 'role': 'ves-io-power-developer-role'},
             {'namespace': 'shared', 'role': 'ves-io-power-developer-role'}
         ]
+    }
     userPayload = {
         'email': email.lower(),
         'first_name': first_name,
@@ -183,7 +188,7 @@ def createUserRoles(email: str, first_name: str, last_name: str, s: dict, create
         'name': email.lower(),
         'idm_type': 'SSO',
         'namespace': 'system',
-        'namespace_roles': namespace_roles,
+        'namespace_roles': namespace_map[role],
         'type': 'USER'
     }
     if createdNS:
@@ -212,16 +217,18 @@ def delUser(email: str, s: dict) -> dict:
     except requests.exceptions.RequestException as e:
         return updateSO(s, 'delUser', 'error', e)
 
-def addUser(s: dict, email: str, first_name: str, last_name: str) -> dict:
+def  addUser(s: dict, email: str, first_name: str, last_name: str, role: str) -> dict:
     checkUser(email, s)
     if s['lastOp']['status'] == 'present':
         return updateSO(s, 'addUser', 'error', 'User {0} already exists.'.format(email))
     checkUserNS(email, s)
     if s['lastOp']['status'] == 'present':
         return updateSO(s, 'addUser', 'error', 'NS {0} already exists.'.format(findUserNS(email)))
-    createUserNS(email, s)
-    createdNS = findUserNS(email)
-    createUserRoles(email, first_name, last_name, s, createdNS, False, False)
+    createdNS = None
+    if role != 'monitor':
+        createUserNS(email, s)
+        createdNS = findUserNS(email)
+    createUserRoles(email, first_name, last_name, s, createdNS, False, role)
     if s['lastOp']['status'] == 'success':
         return updateSO(s, 'addUser', 'success', 'User {0} created.'.format(email))
     else:

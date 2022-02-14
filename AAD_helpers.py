@@ -30,44 +30,55 @@ def getAADGroupMembers(token: str, AADGroupName: str) -> list:
     res = getGroupMembers(token, id)
     return res
 
-def voltUsers2Add(session: dict, token: str, AADGroupName: str) -> list:
-    AADGroupMembers: list[type[dict]] = getAADGroupMembers(token, AADGroupName)
-    # Build comparable VoltConsole user list
-    voltUserList = []
-    for user in session['cache']['users']:
-        voltUserList.append({
-            'userPrincipalName': user['email']
-        }) 
-    # Normalize AAD and VoltConsole user lists
-    for user in AADGroupMembers:
-        user['userPrincipalName'] = user['userPrincipalName'].lower()
-        del user['givenName']
-        del user['surname']
+def voltUsers2Add(session: dict, token: str, AADGroupNames: list, role: str) -> list:
+    users = []
+    for AADGroupName in AADGroupNames:
+        AADGroupMembers: list[type[dict]] = getAADGroupMembers(token, AADGroupName)
+        # Build comparable VoltConsole user list
+        voltUserList = []
+        for user in session['cache']['users']:
+            voltUserList.append({
+                'userPrincipalName': user['email']
+            }) 
+        # Normalize AAD and VoltConsole user lists
+        for user in AADGroupMembers:
+            user['userPrincipalName'] = user['userPrincipalName'].lower()
+            del user['givenName']
+            del user['surname']
 
-    for user in voltUserList:
-        user['userPrincipalName'] = user['userPrincipalName'].lower()
-    # Compare lists 
-    res = [x for x in AADGroupMembers if x not in voltUserList]
-    return res
+        for user in voltUserList:
+            user['userPrincipalName'] = user['userPrincipalName'].lower()
+        # Compare lists 
+        res = [x for x in AADGroupMembers if x not in voltUserList]
+        for user in res:
+            users.append({
+                'userPrincipalName': user['userPrincipalName'],
+                'role': role
+            })
+    return users
 
-def voltUsers2Remove(session: dict, token: str, AADGroupName: str) -> list:
-    AADGroupMembers = getAADGroupMembers(token, AADGroupName)
-    # Build comparable VoltConsole user list
-    voltUserList = []
-    for user in session['cache']['users']:
-        voltUserList.append({
-            'userPrincipalName': user['email']
-        }) 
-    # Normalize AAD and VoltConsole user lists
-    for user in AADGroupMembers:
-        user['userPrincipalName'] = user['userPrincipalName'].lower()
-        del user['givenName']
-        del user['surname']
+def voltUsers2Remove(session: dict, token: str, AADGroupNames: list) -> list:
+    users = []
+    for AADGroupName in AADGroupNames:
+        AADGroupMembers = getAADGroupMembers(token, AADGroupName)
+        # Build comparable VoltConsole user list
+        voltUserList = []
+        for user in session['cache']['users']:
+            voltUserList.append({
+                'userPrincipalName': user['email']
+            }) 
+        # Normalize AAD and VoltConsole user lists
+        for user in AADGroupMembers:
+            user['userPrincipalName'] = user['userPrincipalName'].lower()
+            del user['givenName']
+            del user['surname']
 
-    for user in voltUserList:
-        user['userPrincipalName'] = user['userPrincipalName'].lower()
-    # Compare lists 
-    res = [x for x in voltUserList if x not in AADGroupMembers]
-    return res
+        for user in voltUserList:
+            user['userPrincipalName'] = user['userPrincipalName'].lower()
+        # Compare lists 
+        res = [x for x in voltUserList if x not in AADGroupMembers]
+        for user in res:
+            users.append(user)
+    return users
     
 

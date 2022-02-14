@@ -57,7 +57,7 @@ def getStaleSitesv2(s: dict, staleDays: int = 30):
         updateSO(s, 'getStaleSites', 'error', e)
         return None
 
-def getStaleUserNSs(s: dict, staleDays: int = 30):
+def getStaleUserNSs(s: dict, staleDays: int = 60):
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     try:
         resp = s['session'].get(url)

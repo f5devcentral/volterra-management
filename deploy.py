@@ -1,21 +1,22 @@
 from az.cli import az
-import os, configparser
+import os, configparser, json
 
 def checkVars(config):
     required_vars = {
         'AADclientID': False,
         'AADtenantID': False,
         'AADsecret': False,
-        'AADGroupName': False,
         'VoltTenantApiToken': False,
         'VoltTenantTokenName': False,
-        'VoltTenantName': False,
         'Region': False,
         'ResourceGroupName': False,
         'StorageName': False,
         'KeyVaultName': False,
         'FunctionAppName': False,
-        'TeamsWebhookUrl': False
+        'TeamsWebhookUrl': False,
+        'AADGroupNamesDefault': False,
+        'AADGroupNamesMonitor': False,
+        'AADGroupNamesAdmin': False,
     }
     for s in config.sections():
         for v in required_vars:
@@ -50,10 +51,11 @@ def deployBase(section):
         "AADclientID" : section['AADclientID'],
         "AADtenantID" : section['AADtenantID'],
         "AADsecret" : section['AADsecret'],
-        "AADGroupName" : section['AADGroupName'],
-        "TeamsWebhookUrl" : section['TeamsWebhookUrl']
+        "TeamsWebhookUrl" : section['TeamsWebhookUrl'],
+        "AADGroupNamesDefault": section['AADGroupNamesDefault'],
+        "AADGroupNamesMonitor": section['AADGroupNamesMonitor'],
+        "AADGroupNamesAdmin": section['AADGroupNamesAdmin']
     }
-
     createRG = "group create --name {0} --location {1}" \
         .format(section['ResourceGroupName'], section['Region'])
     azCommand(createRG)
@@ -95,7 +97,7 @@ def deployBase(section):
 
 def main():
     config = configparser.ConfigParser()
-    config.read(os.path.join(os.path.dirname(__file__), 'funcConfig.ini'))
+    config.read(os.path.join(os.path.dirname(__file__), 'allConfig.ini'))
     checkVars(config)
     for section in config.sections():
         deployBase(config[section])
