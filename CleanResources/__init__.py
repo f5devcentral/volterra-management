@@ -38,8 +38,8 @@ def main(cleanTimer: func.TimerRequest) -> None:
 
     users = getStaleUsers(s, 60)
     logging.info(s['lastOp'])
-    #cleanStaleUserNSs(s, users)
-    #logging.info(s['lastOp'])
+    cleanStaleUserNSs(s, users, 60)
+    logging.info(s['lastOp'])
 
     #logging.info("DEBUG sites: {}".format(sites))
-    #logging.info("DEBUG NSs: {}".format(ns))
+    #logging.info("DEBUG NSs: {}".format(users))

@@ -93,7 +93,7 @@ def decomSites(sites: list, s: dict) -> dict:
     else:
         return updateSO(s, 'decomSites', 'success', 'Decommed: {0}'.format(decommedSites))
 
-def cleanStaleUserNSs(s: dict, users: list):
+def cleanStaleUserNSs(s: dict, users: list, staleDays: int = 60):
     if len(users) > 0:
         cleanedNSs = []
         noop = []
@@ -102,10 +102,13 @@ def cleanStaleUserNSs(s: dict, users: list):
             try:
                 r = s['session'].get(url)
                 if r.status_code == 200:
-                    delUserNS(user, s)
-                    desc = 'cleaned by tenant admin at {0}'.format(datetime.datetime.now().isoformat())
-                    createUserNS(user, s, desc)
-                    cleanedNSs.append(user)
+                    if parse(r.json()['system_metadata']['creation_timestamp']) < findExpiry(staleDays):
+                        delUserNS(user, s)
+                        desc = 'cleaned by tenant admin at {0}'.format(datetime.datetime.now().isoformat())
+                        createUserNS(user, s, desc)
+                        cleanedNSs.append(user)
+                    else:
+                        noop.append(user)
                 else:
                     noop.append(user)
             except requests.exceptions.RequestException as e:
