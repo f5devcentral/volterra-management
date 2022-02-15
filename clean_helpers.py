@@ -93,7 +93,7 @@ def decomSites(sites: list, s: dict) -> dict:
     else:
         return updateSO(s, 'decomSites', 'success', 'Decommed: {0}'.format(decommedSites))
 
-def cleanStaleUserNSs(s: dict, users: list, staleDays: int = 60):
+def cleanStaleUserNSs(s: dict, users: list, teamsWebHookUrl: str, tenantName: str, staleDays: int = 60):
     if len(users) > 0:
         cleanedNSs = []
         noop = []
@@ -113,6 +113,30 @@ def cleanStaleUserNSs(s: dict, users: list, staleDays: int = 60):
                     noop.append(user)
             except requests.exceptions.RequestException as e:
                 logging.error("Failed to delete user {}".format(user))
+        teamsCleanAction(teamsWebHookUrl, 'User NSs Cleaned', 'User NS(s) Cleaned', tenantName, 'NS(s) Cleaned:', str(cleanedNSs))
         return updateSO(s, 'cleanStaleUserNSs', 'success', 'Cleaned NSs: {0}, NoOp users:{1}'.format(cleanedNSs, noop))
     else:
         return updateSO(s, 'cleanStaleUserNSs', 'success', 'no stale NSs to clean')
+
+def teamsCleanAction(url: str, summary: str, title: str, tenant: str, fact_name: str, fact_value: str):
+    payload = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": summary,
+        "sections": [{
+            "activityTitle": title,
+            "activitySubtitle": "in {0} tenant".format(tenant),
+            "activityImage": "https://teamsnodesample.azurewebsites.net/static/img/image2.png",
+            "facts": [{
+                "name": fact_name,
+                "value": "{0}".format(', '.join(fact_value))
+            }],
+            "markdown": "true"
+        }]
+    }
+    logging.debug(payload)
+    logging.debug(url)
+    resp = requests.post(url, json=payload)
+    logging.debug(resp.status_code)
+    logging.debug(resp.text)

@@ -4,6 +4,7 @@ import os
 
 from volterra_helpers import createVoltSession
 from clean_helpers import getStaleSites, decomSites, getStaleUsers, cleanStaleUserNSs 
+from quota_helpers import postQuotaViolations
 
 import azure.functions as func
 
@@ -19,7 +20,8 @@ def main(cleanTimer: func.TimerRequest) -> None:
 
     required_vars = {
         'VoltTenantName': False,
-        'VoltTenantApiToken': False
+        'VoltTenantApiToken': False,
+        'TeamsWebhookUrl': False
     }
     for v in required_vars:
         required_vars[v] = os.environ.get(v, False)
@@ -36,9 +38,10 @@ def main(cleanTimer: func.TimerRequest) -> None:
     #decomSites(sites, s)
     #logging.info(s['lastOp'])
 
-    users = getStaleUsers(s, 60)
+    staleDays = 60
+    users = getStaleUsers(s, staleDays)
     logging.info(s['lastOp'])
-    cleanStaleUserNSs(s, users, 60)
+    cleanStaleUserNSs(s, users, required_vars['TeamsWebhookUrl'], required_vars['VoltTenantName'], staleDays)
     logging.info(s['lastOp'])
 
     #logging.info("DEBUG sites: {}".format(sites))
