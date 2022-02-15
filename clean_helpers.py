@@ -113,12 +113,13 @@ def cleanStaleUserNSs(s: dict, users: list, teamsWebHookUrl: str, tenantName: st
                     noop.append(user)
             except requests.exceptions.RequestException as e:
                 logging.error("Failed to delete user {}".format(user))
-        teamsCleanAction(teamsWebHookUrl, 'User NSs Cleaned', 'User NS(s) Cleaned', tenantName, 'NS(s) Cleaned:', str(cleanedNSs))
+        if len(cleanedNSs) > 0:
+            teamsCleanAction(teamsWebHookUrl, 'User NSs Cleaned', 'User NS(s) Cleaned', tenantName, 'NS(s) Cleaned:', cleanedNSs)
         return updateSO(s, 'cleanStaleUserNSs', 'success', 'Cleaned NSs: {0}, NoOp users:{1}'.format(cleanedNSs, noop))
     else:
         return updateSO(s, 'cleanStaleUserNSs', 'success', 'no stale NSs to clean')
 
-def teamsCleanAction(url: str, summary: str, title: str, tenant: str, fact_name: str, fact_value: str):
+def teamsCleanAction(url: str, summary: str, title: str, tenant: str, fact_name: str, fact_value: list):
     payload = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
