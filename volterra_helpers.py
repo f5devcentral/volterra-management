@@ -166,24 +166,29 @@ def delUserNS(email: str, s: dict) -> dict:
 def createUserRoles(email: str, first_name: str, last_name: str, s: dict, createdNS: str=None, exists: bool=False, role: str="default") -> dict:
     url = s['urlBase'] + "/api/web/custom/namespaces/system/user_roles"
     namespace_map = {
-        'monitor': [
-            {'namespace': 'system', 'role': 'ves-io-monitor-role'},
-            {'namespace': '*', 'role': 'ves-io-monitor-role'},
-            {'namespace': 'shared', 'role': 'ves-io-monitor-role'}
-        ],
-        'admin': [
-            {'namespace': 'system', 'role': 'ves-io-admin-role'},
-            {'namespace': '*', 'role': 'ves-io-admin-role'},
-            {'namespace': 'default', 'role': 'ves-io-admin-role'},
-            {'namespace': 'shared', 'role': 'ves-io-admin-role'}
-        ],
-        'default': [
-            {'namespace': 'system', 'role': 'ves-io-power-developer-role'},
-            {'namespace': 'system', 'role': 'f5-demo-infra-write'},
-            {'namespace': '*', 'role': 'ves-io-monitor-role'},
-            {'namespace': 'default', 'role': 'ves-io-power-developer-role'},
-            {'namespace': 'shared', 'role': 'ves-io-power-developer-role'}
-        ]
+        'monitor': {
+            'namespace_roles': [
+                {'namespace': 'system', 'role': 'ves-io-monitor-role'},
+                {'namespace': '*', 'role': 'ves-io-monitor-role'},
+                {'namespace': 'shared', 'role': 'ves-io-monitor-role'}
+            ],
+            'group_names': []
+        },
+        'admin': {
+            'namespace_roles': [
+                {'namespace': 'system', 'role': 'ves-io-admin-role'},
+                {'namespace': '*', 'role': 'ves-io-admin-role'},
+                {'namespace': 'default', 'role': 'ves-io-admin-role'},
+                {'namespace': 'shared', 'role': 'ves-io-admin-role'}
+            ],
+            'group_names': []
+        },
+        'default': {
+            'namespace_roles': [],
+            'group_names': [
+                'sales-tenant-default-group'
+            ]
+        }
     }
     userPayload = {
         'email': email.lower(),
@@ -192,7 +197,8 @@ def createUserRoles(email: str, first_name: str, last_name: str, s: dict, create
         'name': email.lower(),
         'idm_type': 'SSO',
         'namespace': 'system',
-        'namespace_roles': namespace_map[role],
+        'namespace_roles': namespace_map[role]['namespace_roles'],
+        'group_names': namespace_map[role]['group_names'],
         'type': 'USER'
     }
     if createdNS:
