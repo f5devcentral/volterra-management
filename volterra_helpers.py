@@ -205,7 +205,7 @@ def createUserRoles(email: str, first_name: str, last_name: str, s: dict, create
         userPayload['namespace_roles'].append(
             {'namespace': createdNS, 'role': 'ves-io-power-developer-role'})
         userPayload['namespace_roles'].append(
-            {'namespace': createdNS, 'role': 'f5xc-aip-user'})
+            {'namespace': createdNS, 'role': 'f5xc-aip-admin'})
     try:
         if exists:
             resp = s['session'].put(url, json=userPayload)
